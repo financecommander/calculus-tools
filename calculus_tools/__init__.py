@@ -1,3 +1,3 @@
-"""calculus-tools — shared AI tools and providers for the Calculus ecosystem."""
+"""calculus-tools — shared AI tools, providers, and API clients for the Calculus ecosystem."""
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
