@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calculus-tools"
+version = "1.0.0"
+description = "Shared AI tools and providers for the Calculus Holdings ecosystem"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.25",
+    "requests>=2.31",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+crewai = ["crewai>=1.0"]
+all = ["crewai>=1.0"]
+
+[tool.setuptools.packages.find]
+include = ["calculus_tools*"]
