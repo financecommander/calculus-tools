@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "calculus-tools"
-version = "2.2.0"
+version = "2.3.0"
 description = "Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem"
 readme = "README.md"
 license = {text = "Proprietary"}

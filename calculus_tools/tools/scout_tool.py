@@ -14,9 +14,14 @@ class ScoutTool(BaseTool):
         "Real-time intelligence scout. Searches X (Twitter) and the web "
         "for latest news, trends, sentiment, or events."
     )
+    args_schema: type = ScoutInput
 
     def _run(self, query: str) -> str:
         try:
+            xai_key = os.getenv("XAI_API_KEY")
+            if not xai_key:
+                return "Scout error: XAI_API_KEY not set."
+
             tavily_key = os.getenv("TAVILY_API_KEY")
             web_context = ""
             if tavily_key:
@@ -28,12 +33,13 @@ class ScoutTool(BaseTool):
                         "search_depth": "advanced",
                         "include_answer": True,
                     },
+                    timeout=15,
                 ).json()
                 web_context = web.get("answer", "")[:600]
 
             x_response = requests.post(
                 "https://api.x.ai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {os.getenv('XAI_API_KEY')}"},
+                headers={"Authorization": f"Bearer {xai_key}"},
                 json={
                     "model": "grok-4-0709",
                     "messages": [
@@ -43,6 +49,7 @@ class ScoutTool(BaseTool):
                         }
                     ],
                 },
+                timeout=30,
             ).json()
             x_content = x_response["choices"][0]["message"]["content"]
 

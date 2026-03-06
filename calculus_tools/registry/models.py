@@ -29,6 +29,11 @@ class ApiCategory(str, Enum):
     MARKET_DATA = "market_data"
     SEC = "sec"
     SOCIAL = "social"
+    LEGAL = "legal"
+    CORPORATE = "corporate"
+    CHEMISTRY = "chemistry"
+    NUTRITION = "nutrition"
+    KNOWLEDGE = "knowledge"
     OTHER = "other"
 
 

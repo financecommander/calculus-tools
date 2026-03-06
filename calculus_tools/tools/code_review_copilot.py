@@ -19,9 +19,14 @@ class CodeReviewCopilotTool(BaseTool):
         "Expert code reviewer. Analyzes for bugs, security, performance, "
         "and suggests improvements with real-time research."
     )
+    args_schema: type = CodeReviewInput
 
     def _run(self, code: str, language: str = "python", focus: str = "all") -> str:
         try:
+            xai_key = os.getenv("XAI_API_KEY")
+            if not xai_key:
+                return "Review error: XAI_API_KEY not set."
+
             tavily_key = os.getenv("TAVILY_API_KEY")
             context = ""
             if tavily_key:
@@ -32,12 +37,13 @@ class CodeReviewCopilotTool(BaseTool):
                         "query": f"{language} code review best practices {focus} 2026",
                         "search_depth": "advanced",
                     },
+                    timeout=15,
                 ).json()
                 context = research.get("answer", "")[:600]
 
             response = requests.post(
                 "https://api.x.ai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {os.getenv('XAI_API_KEY')}"},
+                headers={"Authorization": f"Bearer {xai_key}"},
                 json={
                     "model": "grok-4-0709",
                     "messages": [
@@ -59,6 +65,7 @@ Return:
                         }
                     ],
                 },
+                timeout=30,
             )
             return response.json()["choices"][0]["message"]["content"]
         except Exception as e:

@@ -15,9 +15,14 @@ class CopilotTool(BaseTool):
         "Advanced Coding & Research Copilot. Searches the web in real-time "
         "for best practices and generates clean, working code with explanations."
     )
+    args_schema: type = CopilotInput
 
     def _run(self, query: str, language: str = "python") -> str:
         try:
+            xai_key = os.getenv("XAI_API_KEY")
+            if not xai_key:
+                return "Copilot error: XAI_API_KEY not set."
+
             tavily_key = os.getenv("TAVILY_API_KEY")
             context = ""
             if tavily_key:
@@ -29,12 +34,13 @@ class CopilotTool(BaseTool):
                         "search_depth": "advanced",
                         "include_answer": True,
                     },
+                    timeout=15,
                 ).json()
                 context = research.get("answer", "")[:800]
 
             response = requests.post(
                 "https://api.x.ai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {os.getenv('XAI_API_KEY')}"},
+                headers={"Authorization": f"Bearer {xai_key}"},
                 json={
                     "model": "grok-4-0709",
                     "messages": [
@@ -55,6 +61,7 @@ Return:
                         }
                     ],
                 },
+                timeout=30,
             )
             return response.json()["choices"][0]["message"]["content"]
         except Exception as e:

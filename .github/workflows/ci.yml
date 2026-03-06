@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[all]"
+          pip install pytest pytest-cov responses
+
+      - name: Lint — syntax check
+        run: python -m py_compile calculus_tools/__init__.py
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short --cov=calculus_tools --cov-report=term-missing
+
+      - name: Version consistency check
+        run: |
+          PY_VER=$(python -c "from calculus_tools import __version__; print(__version__)")
+          TOML_VER=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "Python: $PY_VER  TOML: $TOML_VER"
+          [ "$PY_VER" = "$TOML_VER" ] || (echo "Version mismatch!" && exit 1)

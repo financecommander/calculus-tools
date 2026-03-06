@@ -9,4 +9,4 @@ Modules:
     registry    — API catalog with PostgreSQL / in-memory store
 """
 
-__version__ = "2.2.0"
+__version__ = "2.3.0"
