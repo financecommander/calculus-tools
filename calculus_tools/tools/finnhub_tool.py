@@ -7,6 +7,7 @@ Docs: https://finnhub.io/docs/api
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+from datetime import datetime, timedelta
 import os
 import requests
 
@@ -89,8 +90,6 @@ class FinnhubTool(BaseTool):
         )
 
     def _news(self, symbol: str, api_key: str) -> str:
-        from datetime import datetime, timedelta
-
         today = datetime.now().strftime("%Y-%m-%d")
         week_ago = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
         items = self._get(

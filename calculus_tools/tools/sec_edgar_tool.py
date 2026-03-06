@@ -69,12 +69,14 @@ class SecEdgarTool(BaseTool):
             lines = [f"SEC EDGAR results for '{query}':"]
             for h in hits:
                 src = h.get("_source", {})
+                name = (src.get("display_names") or ["N/A"])[0]
+                cik = (src.get("ciks") or [""])[0].lstrip("0")
+                adsh = src.get("adsh", "").replace("-", "")
                 lines.append(
-                    f"  • {src.get('form_type', '?')} | "
-                    f"{src.get('entity_name', 'N/A')} | "
+                    f"  • {src.get('form', '?')} | "
+                    f"{name} | "
                     f"Filed {src.get('file_date', '?')} | "
-                    f"https://www.sec.gov/Archives/edgar/data/"
-                    f"{src.get('entity_id', '')}/{src.get('file_num', '')}"
+                    f"https://www.sec.gov/Archives/edgar/data/{cik}/{adsh}"
                 )
             return "\n".join(lines)
 
@@ -105,9 +107,10 @@ class SecEdgarTool(BaseTool):
             lines = [f"SEC full-text results for '{query}':"]
             for h in hits:
                 src = h.get("_source", {})
+                name = (src.get("display_names") or ["N/A"])[0]
                 lines.append(
-                    f"  • {src.get('form_type', '?')} | "
-                    f"{src.get('entity_name', 'N/A')} | "
+                    f"  • {src.get('form', '?')} | "
+                    f"{name} | "
                     f"Filed {src.get('file_date', '?')}"
                 )
             return "\n".join(lines)

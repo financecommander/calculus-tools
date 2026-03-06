@@ -7,6 +7,7 @@ Docs: https://www.alphavantage.co/documentation/
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+import json
 import os
 import requests
 
@@ -115,5 +116,4 @@ class AlphaVantageTool(BaseTool):
             return "\n".join(lines)
         else:
             # Generic: return first few keys
-            import json
             return json.dumps(data, indent=2)[:2000]

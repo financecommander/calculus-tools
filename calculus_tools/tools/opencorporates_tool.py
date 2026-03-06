@@ -1,6 +1,7 @@
 """OpenCorporates Tool — Global company registry lookup.
 
-Free tier: 50 req/day (no key for basic). API key for higher limits.
+Requires API key (free tier discontinued). Get key at:
+https://opencorporates.com/api_accounts/new
 Docs: https://api.opencorporates.com/documentation/API-Reference
 """
 
@@ -38,8 +39,9 @@ class OpenCorporatesTool(BaseTool):
     ) -> str:
         params: dict = {"q": query, "per_page": max_results}
         token = os.getenv("OPENCORPORATES_API_KEY")
-        if token:
-            params["api_token"] = token
+        if not token:
+            return "OpenCorporates error: OPENCORPORATES_API_KEY not set (required since free tier discontinued)."
+        params["api_token"] = token
 
         endpoint = f"{_OC_BASE}/{search_type}/search"
 
