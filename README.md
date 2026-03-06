@@ -65,6 +65,7 @@ All tools extend CrewAI `BaseTool` and expose a synchronous `_run()` method.
 | **Code Review** | `CodeReviewCopilotTool` | Automated code review — bug detection, security scanning, performance analysis |
 | **Scout** | `ScoutTool` | Real-time intelligence — X (Twitter) + web search for news, trends, sentiment |
 | **API Intelligence** | `ApiIntelligenceTool` | Multi-API routing — selects relevant APIs from the registry, calls in parallel, synthesizes results |
+| **Grokpedia** | `GrokpediaTool` | Real-time knowledge base — factual answers, current events, trends via Grok-4 (low temperature) |
 
 ### CrewAI Tools
 
@@ -73,6 +74,15 @@ from calculus_tools.tools import CopilotTool, CodeReviewCopilotTool, ScoutTool
 
 copilot = CopilotTool()
 result = copilot._run(query="Build a FastAPI rate limiter", language="python")
+```
+
+### Grokpedia
+
+```python
+from calculus_tools.tools import GrokpediaTool
+
+grok = GrokpediaTool()
+result = grok._run(query="What are the latest SEC enforcement actions in 2026?")
 ```
 
 ### API Intelligence
