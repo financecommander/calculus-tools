@@ -5,8 +5,18 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "calculus-tools"
 version = "2.1.0"
-description = "Shared AI tools, providers, and API clients for the Calculus Holdings ecosystem"
+description = "Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem"
+readme = "README.md"
+license = {text = "Proprietary"}
 requires-python = ">=3.10"
+keywords = ["ai", "crewai", "grok", "api-registry", "calculus"]
+classifiers = [
+    "Private :: Do Not Upload",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "httpx>=0.25",
     "requests>=2.31",
@@ -19,5 +29,11 @@ crewai = ["crewai>=1.0"]
 db = ["asyncpg>=0.29"]
 all = ["crewai>=1.0", "asyncpg>=0.29"]
 
+[project.urls]
+Repository = "https://github.com/financecommander/calculus-tools"
+
 [tool.setuptools.packages.find]
 include = ["calculus_tools*"]
+
+[tool.setuptools.package-data]
+"calculus_tools.registry" = ["seed_apis.json", "seed_apis.csv"]
