@@ -1,6 +1,6 @@
 # calculus-tools
 
-> **v2.1.0** — Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem.
+> **v2.2.0** — Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem.
 
 Used by [AI-PORTAL](https://github.com/financecommander/AI-PORTAL), [super-duper-spork](https://github.com/financecommander/super-duper-spork), and other projects.
 
@@ -22,11 +22,21 @@ calculus_tools/
 │   ├── import_seed.py      # CLI bulk-import script
 │   ├── seed_apis.json      # 20 pre-loaded free APIs
 │   └── seed_apis.csv
-└── tools/                  # CrewAI BaseTool implementations
+└── tools/                  # CrewAI BaseTool implementations (14 tools)
     ├── copilot_tool.py
     ├── code_review_copilot.py
     ├── scout_tool.py
-    └── api_intelligence.py # Multi-API routing & synthesis
+    ├── grokpedia_tool.py
+    ├── api_intelligence.py # Multi-API routing & synthesis
+    ├── sec_edgar_tool.py   # SEC EDGAR filings
+    ├── courtlistener_tool.py # Court opinions & dockets
+    ├── opencorporates_tool.py # Global company registry
+    ├── alpha_vantage_tool.py # Stock prices & fundamentals
+    ├── finnhub_tool.py     # Market data & news
+    ├── pubchem_tool.py     # Chemical compound data
+    ├── usda_fooddata_tool.py # Nutritional data
+    ├── newsapi_tool.py     # Global news articles
+    └── wikipedia_tool.py   # General knowledge lookup
 ```
 
 ---
@@ -66,6 +76,15 @@ All tools extend CrewAI `BaseTool` and expose a synchronous `_run()` method.
 | **Scout** | `ScoutTool` | Real-time intelligence — X (Twitter) + web search for news, trends, sentiment |
 | **API Intelligence** | `ApiIntelligenceTool` | Multi-API routing — selects relevant APIs from the registry, calls in parallel, synthesizes results |
 | **Grokpedia** | `GrokpediaTool` | Real-time knowledge base — factual answers, current events, trends via Grok-4 (low temperature) |
+| **SEC EDGAR** | `SecEdgarTool` | SEC filings search — 10-K, 10-Q, 8-K, insider trades, XBRL. Free, rate-limited |
+| **CourtListener** | `CourtListenerTool` | U.S. court opinions, dockets, RECAP archives. Free (100 req/day) |
+| **OpenCorporates** | `OpenCorporatesTool` | Global company registry — 200M+ companies, officers, subsidiaries. Free (50 req/day) |
+| **Alpha Vantage** | `AlphaVantageTool` | Stock quotes, fundamentals, forex, news sentiment. Free (500 req/day) |
+| **Finnhub** | `FinnhubTool` | Real-time market data, analyst ratings, company news. Free (60 req/min) |
+| **PubChem** | `PubChemTool` | Chemical compound search — molecular properties, structures, safety data. Free, no key |
+| **USDA FoodData** | `FoodDataTool` | Nutritional composition — calories, macros, vitamins, minerals. Free, no key |
+| **NewsAPI** | `NewsApiTool` | Global news headlines & articles from 80K+ sources. Free (100 req/day) |
+| **Wikipedia** | `WikipediaTool` | General knowledge lookup — article summaries & links. Free, unlimited |
 
 ### CrewAI Tools
 
@@ -92,6 +111,52 @@ from calculus_tools.tools import ApiIntelligenceTool
 
 intel = ApiIntelligenceTool()
 result = intel._run(query="What is my public IP and a random cat fact?", max_apis=5)
+```
+
+### Data API Tools (v2.2.0)
+
+```python
+from calculus_tools.tools import (
+    SecEdgarTool, CourtListenerTool, OpenCorporatesTool,
+    AlphaVantageTool, FinnhubTool, PubChemTool,
+    FoodDataTool, NewsApiTool, WikipediaTool,
+)
+
+# SEC filings
+sec = SecEdgarTool()
+result = sec._run(query="Tesla", filing_type="10-K", max_results=3)
+
+# Court records
+court = CourtListenerTool()
+result = court._run(query="securities fraud", search_type="opinions")
+
+# Company registry
+oc = OpenCorporatesTool()
+result = oc._run(query="Calculus Holdings", search_type="companies")
+
+# Stock prices
+av = AlphaVantageTool()
+result = av._run(symbol="AAPL", function="GLOBAL_QUOTE")
+
+# Market data + news
+fh = FinnhubTool()
+result = fh._run(symbol="TSLA", function="company-news")
+
+# Chemistry
+chem = PubChemTool()
+result = chem._run(query="aspirin", search_type="name")
+
+# Nutrition
+food = FoodDataTool()
+result = food._run(query="chicken breast", max_results=3)
+
+# News
+news = NewsApiTool()
+result = news._run(query="AI regulation", category="technology")
+
+# Wikipedia
+wiki = WikipediaTool()
+result = wiki._run(query="Monte Carlo method", sentences=5)
 ```
 
 The tool automatically:
@@ -228,6 +293,13 @@ Supports both `send_message()` (full response) and `stream_message()` (SSE strea
 | `XAI_API_KEY` | Yes (for AI features) | All tools, TavilyGrokProvider |
 | `TAVILY_API_KEY` | No (skips web search if absent) | CopilotTool, CodeReviewCopilotTool, ScoutTool, TavilyGrokProvider |
 | `DATABASE_URL` | No (falls back to in-memory) | RegistryStore, import_seed |
+| `SEC_USER_AGENT` | No (default provided) | SecEdgarTool |
+| `COURTLISTENER_API_KEY` | No (basic access without) | CourtListenerTool |
+| `OPENCORPORATES_API_KEY` | No (50 req/day without) | OpenCorporatesTool |
+| `ALPHA_VANTAGE_API_KEY` | Yes | AlphaVantageTool |
+| `FINNHUB_API_KEY` | Yes | FinnhubTool |
+| `USDA_API_KEY` | No (uses DEMO_KEY) | FoodDataTool |
+| `NEWSAPI_KEY` | Yes | NewsApiTool |
 
 ---
 
