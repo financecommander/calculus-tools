@@ -1,0 +1,21 @@
+name,base_url,auth_type,rate_limit,cost_per_call,category,notes,enabled
+JSONPlaceholder,https://jsonplaceholder.typicode.com/posts,none,unlimited,0,testing,Fake REST API — perfect for dry-run testing,true
+Public APIs,https://api.publicapis.org/entries,none,unlimited,0,api_discovery,Meta-API — dynamically discover new free APIs,true
+Dog CEO,https://dog.ceo/api/breeds/image/random,none,unlimited,0,fun,Simple image endpoint — no key,true
+Cat Fact,https://catfact.ninja/fact,none,unlimited,0,fun,Simple fact endpoint,true
+Bored API,https://www.boredapi.com/api/activity,none,unlimited,0,fun,Random activity generator,true
+Agify.io,https://api.agify.io?name=Sean,none,unlimited,0,demographics,Age prediction from name,true
+Genderize.io,https://api.genderize.io?name=Sean,none,unlimited,0,demographics,Gender prediction from name,true
+Nationalize.io,https://api.nationalize.io?name=Sean,none,unlimited,0,demographics,Country prediction from name,true
+IPify,https://api.ipify.org?format=json,none,unlimited,0,network,Get caller public IP,true
+IP API,http://ip-api.com/json,none,45 req/min,0,geolocation,IP to city/country/ISP,true
+REST Countries,https://restcountries.com/v3.1/name/usa,none,unlimited,0,geolocation,"Country details, currencies, flags",true
+Frankfurter,https://api.frankfurter.app/latest?from=USD&to=EUR,none,unlimited,0,finance,Real-time FX rates,true
+Open Exchange Rates,https://openexchangerates.org/api/latest.json,none,1000 req/month,0,finance,FX rates historical — free tier,true
+Numbers API,http://numbersapi.com/random/trivia,none,unlimited,0,fun,Interesting facts about numbers,true
+PokeAPI,https://pokeapi.co/api/v2/pokemon/pikachu,none,unlimited,0,fun,Pokemon data — good for structured data tests,true
+SWAPI,https://swapi.dev/api/people/1/,none,unlimited,0,fun,Star Wars data,true
+Public Holiday API,https://date.nager.at/api/v3/publicholidays/2026/US,none,unlimited,0,calendar,Public holidays by country,true
+Sunrise-Sunset,https://api.sunrise-sunset.org/json?lat=41.85&lng=-72.65,none,unlimited,0,geolocation,Sunrise/sunset times,true
+Zippopotam,http://api.zippopotam.us/us/06095,none,unlimited,0,geolocation,ZIP code to city/state,true
+HTTPBin,https://httpbin.org/get,none,unlimited,0,testing,Echo service for testing HTTP clients,true

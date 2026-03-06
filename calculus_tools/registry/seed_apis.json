@@ -1,0 +1,22 @@
+[
+  {"name": "JSONPlaceholder", "base_url": "https://jsonplaceholder.typicode.com/posts", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "testing", "notes": "Fake REST API — perfect for dry-run testing"},
+  {"name": "Public APIs", "base_url": "https://api.publicapis.org/entries", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "api_discovery", "notes": "Meta-API — dynamically discover new free APIs"},
+  {"name": "Dog CEO", "base_url": "https://dog.ceo/api/breeds/image/random", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "fun", "notes": "Simple image endpoint — no key"},
+  {"name": "Cat Fact", "base_url": "https://catfact.ninja/fact", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "fun", "notes": "Simple fact endpoint"},
+  {"name": "Bored API", "base_url": "https://www.boredapi.com/api/activity", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "fun", "notes": "Random activity generator"},
+  {"name": "Agify.io", "base_url": "https://api.agify.io?name=Sean", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "demographics", "notes": "Age prediction from name"},
+  {"name": "Genderize.io", "base_url": "https://api.genderize.io?name=Sean", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "demographics", "notes": "Gender prediction from name"},
+  {"name": "Nationalize.io", "base_url": "https://api.nationalize.io?name=Sean", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "demographics", "notes": "Country prediction from name"},
+  {"name": "IPify", "base_url": "https://api.ipify.org?format=json", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "network", "notes": "Get caller's public IP"},
+  {"name": "IP API", "base_url": "http://ip-api.com/json", "auth_type": "none", "rate_limit": "45 req/min", "cost_per_call": 0, "category": "geolocation", "notes": "IP to city/country/ISP"},
+  {"name": "REST Countries", "base_url": "https://restcountries.com/v3.1/name/usa", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "geolocation", "notes": "Country details, currencies, flags"},
+  {"name": "Frankfurter", "base_url": "https://api.frankfurter.app/latest?from=USD&to=EUR", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "finance", "notes": "Real-time FX rates"},
+  {"name": "Open Exchange Rates", "base_url": "https://openexchangerates.org/api/latest.json", "auth_type": "none", "rate_limit": "1000 req/month", "cost_per_call": 0, "category": "finance", "notes": "FX rates, historical — free tier"},
+  {"name": "Numbers API", "base_url": "http://numbersapi.com/random/trivia", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "fun", "notes": "Interesting facts about numbers"},
+  {"name": "PokeAPI", "base_url": "https://pokeapi.co/api/v2/pokemon/pikachu", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "fun", "notes": "Pokemon data — good for structured data tests"},
+  {"name": "SWAPI", "base_url": "https://swapi.dev/api/people/1/", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "fun", "notes": "Star Wars data"},
+  {"name": "Public Holiday API", "base_url": "https://date.nager.at/api/v3/publicholidays/2026/US", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "calendar", "notes": "Public holidays by country"},
+  {"name": "Sunrise-Sunset", "base_url": "https://api.sunrise-sunset.org/json?lat=41.85&lng=-72.65", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "geolocation", "notes": "Sunrise/sunset times"},
+  {"name": "Zippopotam", "base_url": "http://api.zippopotam.us/us/06095", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "geolocation", "notes": "ZIP code to city/state"},
+  {"name": "HTTPBin", "base_url": "https://httpbin.org/get", "auth_type": "none", "rate_limit": "unlimited", "cost_per_call": 0, "category": "testing", "notes": "Echo service for testing HTTP clients"}
+]
