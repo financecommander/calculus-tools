@@ -14,6 +14,8 @@ from calculus_tools.tools.pubchem_tool import PubChemTool
 from calculus_tools.tools.usda_fooddata_tool import FoodDataTool
 from calculus_tools.tools.newsapi_tool import NewsApiTool
 from calculus_tools.tools.wikipedia_tool import WikipediaTool
+from calculus_tools.tools.sendgrid_tool import SendGridTool, SendGridBatchTool
+from calculus_tools.tools.ghg_tool import GHGTool
 
 __all__ = [
     "CopilotTool",
@@ -31,4 +33,8 @@ __all__ = [
     "FoodDataTool",
     "NewsApiTool",
     "WikipediaTool",
+    # --- Calculus Division 2 Tools (v2.3.0) ---
+    "SendGridTool",
+    "SendGridBatchTool",
+    "GHGTool",
 ]
