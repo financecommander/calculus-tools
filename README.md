@@ -1,6 +1,6 @@
 # calculus-tools
 
-> **v2.2.0** — Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem.
+> **v2.5.0** — Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem.
 
 Used by [AI-PORTAL](https://github.com/financecommander/AI-PORTAL), [super-duper-spork](https://github.com/financecommander/super-duper-spork), and other projects.
 
@@ -11,32 +11,76 @@ Used by [AI-PORTAL](https://github.com/financecommander/AI-PORTAL), [super-duper
 ```
 calculus_tools/
 ├── __init__.py
-├── clients/                # HTTP / pipeline clients
-│   ├── pipeline_client.py  # Multi-agent pipeline execution (REST + WebSocket)
-│   └── unified_client.py   # Resilient async HTTP with retry & circuit-breaker
-├── providers/              # AI provider implementations
+├── clients/                    # HTTP / pipeline / service clients (18 total)
+│   ├── pipeline_client.py      # Multi-agent pipeline execution (REST + WebSocket)
+│   ├── unified_client.py       # Resilient async HTTP with retry & circuit-breaker
+│   │
+│   │  ── Full implementations ──
+│   ├── sendgrid_client.py      # SendGrid v3 email (send, batch, templates, suppression)
+│   ├── ghl_client.py           # GoHighLevel CRM (contacts, workflows, tags)
+│   │
+│   │  ── Communication ──
+│   ├── slack_client.py         # Slack Bot (messages, DMs, channels, files)
+│   ├── twilio_sms_client.py    # Twilio SMS + WhatsApp (send, batch, delivery status)
+│   ├── twilio_voice_client.py  # Twilio Voice (calls, TTS, transcription)
+│   │
+│   │  ── Payments ──
+│   ├── stripe_client.py        # Stripe (payment links, invoices, customers, webhooks)
+│   │
+│   │  ── Scheduling ──
+│   ├── calendar_client.py      # Google Calendar (events, availability, meeting links)
+│   │
+│   │  ── Media Generation ──
+│   ├── image_gen_client.py     # DALL-E / Stable Diffusion (generate, edit, upscale)
+│   ├── video_gen_client.py     # Runway / D-ID (text→video, image→video, avatars)
+│   │
+│   │  ── Language & Document ──
+│   ├── translation_client.py   # DeepL / Google (translate, batch, detect language)
+│   ├── ocr_client.py           # Tesseract / Cloud Vision (text, tables, receipts)
+│   ├── pdf_client.py           # PDF generation (HTML→PDF, merge, split, watermark)
+│   ├── transcription_client.py # Whisper / AssemblyAI (transcribe, speakers, notes)
+│   │
+│   │  ── Feedback ──
+│   ├── survey_client.py        # Typeform (create, responses, NPS, summaries)
+│   │
+│   │  ── Stubs ──
+│   ├── linkedin_client.py      # LinkedIn API
+│   ├── x_client.py             # X/Twitter API
+│   ├── meta_client.py          # Meta/Facebook API
+│   ├── cms_client.py           # CMS publishing
+│   ├── enrichment_client.py    # Data enrichment
+│   └── analytics_client.py     # Analytics reporting
+│
+├── utils/                      # Business data utilities
+│   ├── dedupe.py               # Email/contact deduplication
+│   ├── normalizers.py          # Phone, email, name normalization
+│   ├── validators.py           # Email deliverability, phone format
+│   ├── rate_limiter.py         # Rate window enforcement
+│   └── scoring_helpers.py      # Lead scoring utilities
+│
+├── providers/                  # AI provider implementations
 │   └── tavily_grok_provider.py
-├── registry/               # API catalog & seed data
-│   ├── models.py           # Pydantic models (ApiEntry, AuthType, ApiCategory)
-│   ├── store.py            # Async CRUD store (PostgreSQL / in-memory)
-│   ├── import_seed.py      # CLI bulk-import script
-│   ├── seed_apis.json      # 20 pre-loaded free APIs
+├── registry/                   # API catalog & seed data
+│   ├── models.py               # Pydantic models (ApiEntry, AuthType, ApiCategory)
+│   ├── store.py                # Async CRUD store (PostgreSQL / in-memory)
+│   ├── import_seed.py          # CLI bulk-import script
+│   ├── seed_apis.json          # 20 pre-loaded free APIs
 │   └── seed_apis.csv
-└── tools/                  # CrewAI BaseTool implementations (14 tools)
+└── tools/                      # CrewAI BaseTool implementations (14 tools)
     ├── copilot_tool.py
     ├── code_review_copilot.py
     ├── scout_tool.py
     ├── grokpedia_tool.py
-    ├── api_intelligence.py # Multi-API routing & synthesis
-    ├── sec_edgar_tool.py   # SEC EDGAR filings
-    ├── courtlistener_tool.py # Court opinions & dockets
-    ├── opencorporates_tool.py # Global company registry
-    ├── alpha_vantage_tool.py # Stock prices & fundamentals
-    ├── finnhub_tool.py     # Market data & news
-    ├── pubchem_tool.py     # Chemical compound data
-    ├── usda_fooddata_tool.py # Nutritional data
-    ├── newsapi_tool.py     # Global news articles
-    └── wikipedia_tool.py   # General knowledge lookup
+    ├── api_intelligence.py     # Multi-API routing & synthesis
+    ├── sec_edgar_tool.py       # SEC EDGAR filings
+    ├── courtlistener_tool.py   # Court opinions & dockets
+    ├── opencorporates_tool.py  # Global company registry
+    ├── alpha_vantage_tool.py   # Stock prices & fundamentals
+    ├── finnhub_tool.py         # Market data & news
+    ├── pubchem_tool.py         # Chemical compound data
+    ├── usda_fooddata_tool.py   # Nutritional data
+    ├── newsapi_tool.py         # Global news articles
+    └── wikipedia_tool.py       # General knowledge lookup
 ```
 
 ---
@@ -210,6 +254,47 @@ async with PipelineClient(base_url="http://34.139.78.75:8000") as client:
     pipelines = await client.list_pipelines()
     result = await client.run_pipeline("research", query="Analyze $TSLA options flow")
     print(result.output)
+```
+
+### Service Adapters (18 clients)
+
+All service clients are async and follow the same pattern: constructor takes auth credentials, methods return dicts. Full implementations for SendGrid and GHL; stubs with complete API signatures for the rest.
+
+| Client | Class | Status | Description |
+|--------|-------|--------|-------------|
+| **SendGrid** | `SendGridClient` | Full | Email send, batch, templates, suppression, bounce handling |
+| **GoHighLevel** | `GHLClient` | Full | CRM contacts, workflows, tags, search |
+| **Slack** | `SlackClient` | Stub | Bot messages, DMs, channels, file upload |
+| **Twilio SMS** | `TwilioSMSClient` | Stub | SMS, WhatsApp, batch send, delivery status |
+| **Twilio Voice** | `TwilioVoiceClient` | Stub | Calls, TTS, transcription, recordings |
+| **Stripe** | `StripeClient` | Stub | Payment links, invoices, customers, webhook verify |
+| **Calendar** | `CalendarClient` | Stub | Google Calendar events, availability, meeting links |
+| **Image Gen** | `ImageGenClient` | Stub | DALL-E / Stable Diffusion generate, edit, upscale |
+| **Video Gen** | `VideoGenClient` | Stub | Runway / D-ID text→video, image→video, avatars |
+| **Translation** | `TranslationClient` | Stub | DeepL / Google translate, batch, detect language |
+| **OCR** | `OCRClient` | Stub | Tesseract / Cloud Vision text, tables, receipts |
+| **PDF** | `PDFClient` | Stub | HTML→PDF, merge, split, watermark, extract text |
+| **Transcription** | `TranscriptionClient` | Stub | Whisper / AssemblyAI transcribe, speakers, notes |
+| **Survey** | `SurveyClient` | Stub | Typeform create, responses, NPS, summaries |
+| **LinkedIn** | `LinkedInClient` | Stub | LinkedIn API |
+| **X/Twitter** | `XClient` | Stub | X/Twitter API |
+| **Meta** | `MetaClient` | Stub | Meta/Facebook API |
+| **CMS** | `CMSClient` | Stub | CMS publishing |
+
+```python
+from calculus_tools.clients import SendGridClient, GHLClient, SlackClient, StripeClient
+
+# SendGrid (full implementation)
+sg = SendGridClient(api_key="SG.xxx")
+await sg.send_email(to="user@example.com", subject="Hello", html="<p>Hi</p>")
+
+# GHL (full implementation)
+ghl = GHLClient(api_key="ghl-xxx", location_id="loc-123")
+await ghl.create_contact(first_name="John", last_name="Doe", email="john@example.com")
+
+# Stub clients — API signatures defined, raise NotImplementedError
+slack = SlackClient(bot_token="xoxb-xxx")
+# await slack.send_message("#general", "Hello team!")  # → NotImplementedError
 ```
 
 ---
