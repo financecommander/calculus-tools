@@ -1,6 +1,6 @@
 # calculus-tools
 
-> **v2.5.0** — Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem.
+> **v2.6.0** — Shared AI tools, providers, API clients, and registry for the Calculus Holdings ecosystem.
 
 Used by [AI-PORTAL](https://github.com/financecommander/AI-PORTAL), [super-duper-spork](https://github.com/financecommander/super-duper-spork), and other projects.
 
@@ -11,7 +11,7 @@ Used by [AI-PORTAL](https://github.com/financecommander/AI-PORTAL), [super-duper
 ```
 calculus_tools/
 ├── __init__.py
-├── clients/                    # HTTP / pipeline / service clients (18 total)
+├── clients/                    # HTTP / pipeline / service clients (23 total)
 │   ├── pipeline_client.py      # Multi-agent pipeline execution (REST + WebSocket)
 │   ├── unified_client.py       # Resilient async HTTP with retry & circuit-breaker
 │   │
@@ -31,14 +31,21 @@ calculus_tools/
 │   ├── calendar_client.py      # Google Calendar (events, availability, meeting links)
 │   │
 │   │  ── Media Generation ──
-│   ├── image_gen_client.py     # DALL-E / Stable Diffusion (generate, edit, upscale)
-│   ├── video_gen_client.py     # Runway / D-ID (text→video, image→video, avatars)
+│   ├── image_gen_client.py     # DALL-E 3 / Stability AI (generate, edit, variations, upscale)
+│   ├── video_gen_client.py     # Runway Gen-3 / Luma Dream Machine / HeyGen avatars
 │   │
 │   │  ── Language & Document ──
 │   ├── translation_client.py   # DeepL / Google (translate, batch, detect language)
-│   ├── ocr_client.py           # Tesseract / Cloud Vision (text, tables, receipts)
-│   ├── pdf_client.py           # PDF generation (HTML→PDF, merge, split, watermark)
+│   ├── ocr_client.py           # Google Vision / AWS Textract / Tesseract (text, tables, receipts, PDF)
+│   ├── pdf_client.py           # WeasyPrint/API HTML→PDF, merge, split, watermark, extract text
 │   ├── transcription_client.py # Whisper / AssemblyAI (transcribe, speakers, notes)
+│   │
+│   │  ── Infrastructure ──
+│   ├── vector_db_client.py     # Pinecone / ChromaDB / Qdrant / Weaviate (upsert, query, index mgmt)
+│   ├── vault_client.py         # HashiCorp Vault / AWS Secrets Manager (get, put, delete, list)
+│   ├── search_client.py        # Elasticsearch / OpenSearch / Meilisearch (index, search, bulk)
+│   ├── bigquery_client.py      # BigQuery / Snowflake / Redshift (query, schema, insert)
+│   ├── vision_client.py        # Google Vision / AWS Rekognition / OpenAI Vision (labels, text, objects)
 │   │
 │   │  ── Feedback ──
 │   ├── survey_client.py        # Typeform (create, responses, NPS, summaries)
@@ -256,24 +263,29 @@ async with PipelineClient(base_url="http://34.139.78.75:8000") as client:
     print(result.output)
 ```
 
-### Service Adapters (18 clients)
+### Service Adapters (23 clients)
 
-All service clients are async and follow the same pattern: constructor takes auth credentials, methods return dicts. Full implementations for SendGrid and GHL; stubs with complete API signatures for the rest.
+All service clients are async and follow the same pattern: constructor takes auth credentials, methods return dicts.
 
 | Client | Class | Status | Description |
 |--------|-------|--------|-------------|
 | **SendGrid** | `SendGridClient` | Full | Email send, batch, templates, suppression, bounce handling |
 | **GoHighLevel** | `GHLClient` | Full | CRM contacts, workflows, tags, search |
+| **Image Gen** | `ImageGenClient` | Full | DALL-E 3 / Stability AI — generate, edit, variations, upscale, save to disk |
+| **Video Gen** | `VideoGenClient` | Full | Runway Gen-3 / Luma Dream Machine / HeyGen — text→video, image→video, avatars, poll + download |
+| **OCR** | `OCRClient` | Full | Google Vision / AWS Textract / Tesseract — text, structured data, tables, receipts, PDF extraction |
+| **PDF** | `PDFClient` | Full | WeasyPrint / API — HTML→PDF, report generation, merge, split, watermark, extract text with page ranges |
+| **Vector DB** | `VectorDBClient` | Full | Pinecone / ChromaDB / Qdrant / Weaviate — create/delete index, upsert, query, stats |
+| **Vault** | `VaultClient` | Full | HashiCorp Vault / AWS Secrets Manager — get, put, delete, list secrets, engine management |
+| **Vision** | `VisionClient` | Full | Google Vision / AWS Rekognition / OpenAI Vision — labels, text, objects, classification |
+| **Search** | `SearchClient` | Full | Elasticsearch / OpenSearch / Meilisearch — create index, search, bulk index, count |
+| **BigQuery** | `BigQueryClient` | Full | BigQuery / Snowflake / Redshift — query, list datasets/tables, schema, insert rows |
 | **Slack** | `SlackClient` | Stub | Bot messages, DMs, channels, file upload |
 | **Twilio SMS** | `TwilioSMSClient` | Stub | SMS, WhatsApp, batch send, delivery status |
 | **Twilio Voice** | `TwilioVoiceClient` | Stub | Calls, TTS, transcription, recordings |
 | **Stripe** | `StripeClient` | Stub | Payment links, invoices, customers, webhook verify |
 | **Calendar** | `CalendarClient` | Stub | Google Calendar events, availability, meeting links |
-| **Image Gen** | `ImageGenClient` | Stub | DALL-E / Stable Diffusion generate, edit, upscale |
-| **Video Gen** | `VideoGenClient` | Stub | Runway / D-ID text→video, image→video, avatars |
 | **Translation** | `TranslationClient` | Stub | DeepL / Google translate, batch, detect language |
-| **OCR** | `OCRClient` | Stub | Tesseract / Cloud Vision text, tables, receipts |
-| **PDF** | `PDFClient` | Stub | HTML→PDF, merge, split, watermark, extract text |
 | **Transcription** | `TranscriptionClient` | Stub | Whisper / AssemblyAI transcribe, speakers, notes |
 | **Survey** | `SurveyClient` | Stub | Typeform create, responses, NPS, summaries |
 | **LinkedIn** | `LinkedInClient` | Stub | LinkedIn API |
