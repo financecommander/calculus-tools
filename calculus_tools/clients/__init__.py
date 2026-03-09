@@ -131,6 +131,12 @@ try:
 except ImportError:
     ZapierClient = None
 
+# ── Phase 3: Voice AI ──
+try:
+    from calculus_tools.clients.voice_ai_client import VoiceAIClient
+except ImportError:
+    VoiceAIClient = None
+
 __all__ = [
     "PipelineClient",
     "UnifiedClient",
@@ -174,4 +180,6 @@ __all__ = [
     "MetaAdsClient",
     # Phase 2 — Integration
     "ZapierClient",
+    # Phase 3 — Voice AI
+    "VoiceAIClient",
 ]
