@@ -6,6 +6,9 @@ Service adapters (full): SendGrid, GHL (GoHighLevel)
 Service adapters (stubs): LinkedIn, X, Meta, CMS, Enrichment, Analytics,
     Slack, Twilio SMS, Twilio Voice, Stripe, Calendar, ImageGen, VideoGen,
     Translation, OCR, PDF, Survey, Transcription
+Phase 2 adapters: WhatsApp, Discord, Push Notifications, Google Workspace,
+    Microsoft 365, Notion, Airtable, HubSpot, Salesforce, Shopify,
+    QuickBooks, GitHub, Google Ads, Meta Ads, Zapier
 """
 
 try:
@@ -49,6 +52,85 @@ from calculus_tools.clients.transcription_client import TranscriptionClient
 # Feedback
 from calculus_tools.clients.survey_client import SurveyClient
 
+# ── Phase 2: Messaging ──
+try:
+    from calculus_tools.clients.whatsapp_client import WhatsAppClient
+except ImportError:
+    WhatsAppClient = None
+
+try:
+    from calculus_tools.clients.discord_client import DiscordClient
+except ImportError:
+    DiscordClient = None
+
+try:
+    from calculus_tools.clients.push_notification_client import PushNotificationClient
+except ImportError:
+    PushNotificationClient = None
+
+# ── Phase 2: Workspace Connectors ──
+try:
+    from calculus_tools.clients.google_workspace_client import GoogleWorkspaceClient
+except ImportError:
+    GoogleWorkspaceClient = None
+
+try:
+    from calculus_tools.clients.microsoft365_client import Microsoft365Client
+except ImportError:
+    Microsoft365Client = None
+
+try:
+    from calculus_tools.clients.notion_client import NotionClient
+except ImportError:
+    NotionClient = None
+
+try:
+    from calculus_tools.clients.airtable_client import AirtableClient
+except ImportError:
+    AirtableClient = None
+
+try:
+    from calculus_tools.clients.hubspot_client import HubSpotClient
+except ImportError:
+    HubSpotClient = None
+
+try:
+    from calculus_tools.clients.salesforce_client import SalesforceClient
+except ImportError:
+    SalesforceClient = None
+
+try:
+    from calculus_tools.clients.shopify_client import ShopifyClient
+except ImportError:
+    ShopifyClient = None
+
+try:
+    from calculus_tools.clients.quickbooks_client import QuickBooksClient
+except ImportError:
+    QuickBooksClient = None
+
+try:
+    from calculus_tools.clients.github_client import GitHubClient
+except ImportError:
+    GitHubClient = None
+
+# ── Phase 2: Advertising ──
+try:
+    from calculus_tools.clients.google_ads_client import GoogleAdsClient
+except ImportError:
+    GoogleAdsClient = None
+
+try:
+    from calculus_tools.clients.meta_ads_client import MetaAdsClient
+except ImportError:
+    MetaAdsClient = None
+
+# ── Phase 2: Integration ──
+try:
+    from calculus_tools.clients.zapier_client import ZapierClient
+except ImportError:
+    ZapierClient = None
+
 __all__ = [
     "PipelineClient",
     "UnifiedClient",
@@ -73,4 +155,23 @@ __all__ = [
     "TranscriptionClient",
     # Feedback
     "SurveyClient",
+    # Phase 2 — Messaging
+    "WhatsAppClient",
+    "DiscordClient",
+    "PushNotificationClient",
+    # Phase 2 — Workspace Connectors
+    "GoogleWorkspaceClient",
+    "Microsoft365Client",
+    "NotionClient",
+    "AirtableClient",
+    "HubSpotClient",
+    "SalesforceClient",
+    "ShopifyClient",
+    "QuickBooksClient",
+    "GitHubClient",
+    # Phase 2 — Advertising
+    "GoogleAdsClient",
+    "MetaAdsClient",
+    # Phase 2 — Integration
+    "ZapierClient",
 ]
