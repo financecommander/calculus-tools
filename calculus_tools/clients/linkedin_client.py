@@ -1,143 +1,92 @@
-"""LinkedIn API v2 client for profiles, posts, and messaging.
+"""LinkedIn client — posts, profiles, and messaging via LinkedIn Marketing/Community API."""
 
-Usage::
-
-    client = LinkedInClient(access_token="AQV...", organization_id="12345")
-    profile = await client.get_profile()
-    await client.publish_post("Excited to share our latest update!")
-    await client.close()
-"""
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://api.linkedin.com/v2"
+_API = "https://api.linkedin.com/v2"
 
 
 class LinkedInClient:
-    """Async LinkedIn API v2 client."""
+    """Async LinkedIn API client (v2 + Community Management).
 
-    def __init__(
-        self, access_token: str, *, organization_id: str | None = None
-    ) -> None:
-        self.access_token = access_token
-        self.organization_id = organization_id
+    Usage::
+
+        async with LinkedInClient(access_token="AQ...") as li:
+            await li.create_post(org_id="urn:li:organization:12345",
+                                 text="We just shipped v18.0.0!")
+    """
+
+    def __init__(self, access_token: str, *, timeout: float = 30.0):
         self._client = httpx.AsyncClient(
-            base_url=BASE_URL,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "X-Restli-Protocol-Version": "2.0.0",
-                "Content-Type": "application/json",
-            },
-            timeout=30.0,
+            base_url=_API,
+            headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json",
+                     "X-Restli-Protocol-Version": "2.0.0"},
+            timeout=timeout,
         )
 
-    async def close(self) -> None:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
         await self._client.aclose()
 
-    async def get_profile(self) -> dict[str, Any]:
-        """Get the authenticated user's profile via OpenID userinfo."""
-        logger.debug("Fetching authenticated user profile")
-        resp = await self._client.get("https://api.linkedin.com/v2/userinfo")
+    async def get_profile(self) -> Dict[str, Any]:
+        """Get the authenticated user's profile."""
+        resp = await self._client.get("/userinfo")
         resp.raise_for_status()
         return resp.json()
 
-    async def lookup_profile(self, vanity_name: str) -> dict[str, Any]:
-        """Look up a member profile by vanity name (public identifier)."""
-        logger.debug("Looking up profile: %s", vanity_name)
-        resp = await self._client.get(
-            "/people", params={"q": "vanityName", "vanityName": vanity_name}
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    async def publish_post(
-        self,
-        text: str,
-        *,
-        author: str | None = None,
-        visibility: str = "PUBLIC",
-    ) -> dict[str, Any]:
-        """Publish a text post (UGC Post). Author defaults to authenticated user.
-
-        If organization_id is set and no author is provided, posts as the org.
-        """
-        if author is None:
-            if self.organization_id:
-                author = f"urn:li:organization:{self.organization_id}"
-            else:
-                profile = await self.get_profile()
-                author = f"urn:li:person:{profile['sub']}"
+    async def create_post(self, org_id: str, text: str, *, visibility: str = "PUBLIC") -> Dict[str, Any]:
+        """Create a text post on behalf of an organization or person."""
         payload = {
-            "author": author,
+            "author": org_id,
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
                     "shareCommentary": {"text": text},
                     "shareMediaCategory": "NONE",
-                }
+                },
             },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": visibility
-            },
+            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": visibility},
         }
-        logger.info("Publishing post as %s", author)
         resp = await self._client.post("/ugcPosts", json=payload)
         resp.raise_for_status()
         return resp.json()
 
-    async def send_message(
-        self, recipient_urn: str, subject: str, body: str
-    ) -> dict[str, Any]:
-        """Send a direct message to a LinkedIn member."""
-        profile = await self.get_profile()
-        sender_urn = f"urn:li:person:{profile['sub']}"
-        payload = {
-            "recipients": [recipient_urn],
-            "subject": subject,
-            "body": body,
-            "messageType": "MEMBER_TO_MEMBER",
-            "attachments": [],
-        }
-        logger.info("Sending message to %s", recipient_urn)
-        resp = await self._client.post(
-            "/messages",
-            json=payload,
-            params={"action": "create"},
-            headers={"x-li-format": "json", "sender": sender_urn},
-        )
-        resp.raise_for_status()
-        return resp.json() if resp.content else {"status": resp.status_code}
-
-    async def get_company_page(
-        self, organization_id: str | None = None
-    ) -> dict[str, Any]:
-        """Retrieve an organization page by ID."""
-        org_id = organization_id or self.organization_id
-        if not org_id:
-            raise ValueError("organization_id is required")
-        logger.debug("Fetching organization %s", org_id)
+    async def get_organization(self, org_id: str) -> Dict[str, Any]:
+        """Get organization details."""
         resp = await self._client.get(f"/organizations/{org_id}")
         resp.raise_for_status()
         return resp.json()
 
-    async def get_share_statistics(
-        self, share_urn: str, *, organization_id: str | None = None
-    ) -> dict[str, Any]:
-        """Get engagement statistics for a share or post."""
-        org_id = organization_id or self.organization_id
-        params: dict[str, str] = {"q": "organizationalEntity"}
-        if org_id:
-            params["organizationalEntity"] = f"urn:li:organization:{org_id}"
-        params["shares[0]"] = share_urn
-        logger.debug("Fetching share statistics for %s", share_urn)
+    async def get_follower_count(self, org_id: str) -> Dict[str, Any]:
+        """Get follower statistics for an organization."""
         resp = await self._client.get(
-            "/organizationalEntityShareStatistics", params=params
+            "/organizationalEntityFollowerStatistics",
+            params={"q": "organizationalEntity", "organizationalEntity": f"urn:li:organization:{org_id}"},
         )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def search_people(self, keywords: str, *, count: int = 10) -> Dict[str, Any]:
+        """Search for people (requires appropriate API access)."""
+        resp = await self._client.get("/search/people", params={"keywords": keywords, "count": count})
+        resp.raise_for_status()
+        return resp.json()
+
+    async def send_message(self, recipient_urn: str, subject: str, body: str) -> Dict[str, Any]:
+        """Send a direct message (requires Messaging API access)."""
+        payload = {
+            "recipients": [{"person": {"com.linkedin.voyager.messaging.MessagingMember": recipient_urn}}],
+            "subject": subject,
+            "body": {"com.linkedin.voyager.messaging.MessageBody": {"text": body}},
+        }
+        resp = await self._client.post("/messages", json=payload)
         resp.raise_for_status()
         return resp.json()

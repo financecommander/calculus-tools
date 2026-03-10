@@ -1,177 +1,126 @@
-"""Google Workspace client covering Calendar, Drive, and Gmail APIs.
+"""Google Workspace client — Gmail, Calendar, and Drive via Google REST APIs."""
 
-Usage::
-
-    client = GoogleWorkspaceClient(access_token="ya29.a0...")
-    events = await client.list_events(calendar_id="primary")
-    files = await client.list_files(q="mimeType='application/pdf'")
-    emails = await client.list_emails(query="is:unread")
-    await client.close()
-"""
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict, List, Optional
+import base64
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-CALENDAR_URL = "https://www.googleapis.com/calendar/v3"
-DRIVE_URL = "https://www.googleapis.com/drive/v3"
-GMAIL_URL = "https://gmail.googleapis.com/gmail/v1"
-
 
 class GoogleWorkspaceClient:
-    """Async client for Google Calendar, Drive, and Gmail APIs."""
+    """Async Google Workspace API client (Gmail, Calendar, Drive).
 
-    def __init__(self, access_token: str) -> None:
-        self.access_token = access_token
-        self._client = httpx.AsyncClient(
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=30.0,
-        )
+    Usage::
 
-    async def close(self) -> None:
+        async with GoogleWorkspaceClient(access_token="ya29...") as gw:
+            await gw.send_email("user@example.com", "Subject", "Body text")
+            events = await gw.list_calendar_events()
+    """
+
+    def __init__(self, access_token: str, *, timeout: float = 30.0):
+        self._headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        self._timeout = timeout
+        self._client = httpx.AsyncClient(headers=self._headers, timeout=timeout)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
         await self._client.aclose()
 
-    # ── Calendar ───────────────────────────────────────────────────────
+    # ── Gmail ─────────────────────────────────────────────────────
 
-    async def list_events(
-        self,
-        calendar_id: str = "primary",
-        *,
-        time_min: str | None = None,
-        time_max: str | None = None,
-        max_results: int = 50,
-    ) -> list[dict[str, Any]]:
-        """List upcoming calendar events."""
-        params: dict[str, Any] = {
-            "maxResults": max_results,
-            "singleEvents": "true",
-            "orderBy": "startTime",
-        }
-        if time_min:
-            params["timeMin"] = time_min
-        if time_max:
-            params["timeMax"] = time_max
-        logger.debug("Listing events for calendar %s", calendar_id)
-        resp = await self._client.get(
-            f"{CALENDAR_URL}/calendars/{calendar_id}/events", params=params
-        )
-        resp.raise_for_status()
-        return resp.json().get("items", [])
-
-    async def create_event(
-        self,
-        calendar_id: str = "primary",
-        *,
-        summary: str,
-        start: str,
-        end: str,
-        description: str = "",
-        attendees: list[str] | None = None,
-        timezone: str = "UTC",
-    ) -> dict[str, Any]:
-        """Create a calendar event. start/end are ISO-8601 datetime strings."""
-        event: dict[str, Any] = {
-            "summary": summary,
-            "description": description,
-            "start": {"dateTime": start, "timeZone": timezone},
-            "end": {"dateTime": end, "timeZone": timezone},
-        }
-        if attendees:
-            event["attendees"] = [{"email": e} for e in attendees]
-        logger.info("Creating event '%s'", summary)
+    async def send_email(self, to: str, subject: str, body: str, *, from_name: str = "") -> Dict[str, Any]:
+        """Send an email via Gmail API."""
+        message = f"To: {to}\r\nSubject: {subject}\r\n\r\n{body}"
+        raw = base64.urlsafe_b64encode(message.encode()).decode()
         resp = await self._client.post(
-            f"{CALENDAR_URL}/calendars/{calendar_id}/events", json=event
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+            json={"raw": raw},
         )
         resp.raise_for_status()
         return resp.json()
 
-    async def delete_event(
-        self, event_id: str, calendar_id: str = "primary"
-    ) -> int:
-        """Delete a calendar event. Returns HTTP status code."""
-        logger.info("Deleting event %s", event_id)
-        resp = await self._client.delete(
-            f"{CALENDAR_URL}/calendars/{calendar_id}/events/{event_id}"
-        )
-        resp.raise_for_status()
-        return resp.status_code
-
-    # ── Drive ──────────────────────────────────────────────────────────
-
-    async def list_files(
-        self,
-        *,
-        q: str | None = None,
-        page_size: int = 100,
-        fields: str = "files(id,name,mimeType,modifiedTime)",
-    ) -> list[dict[str, Any]]:
-        """List files in Google Drive with optional query filter."""
-        params: dict[str, Any] = {"pageSize": page_size, "fields": fields}
-        if q:
-            params["q"] = q
-        logger.debug("Listing Drive files")
-        resp = await self._client.get(f"{DRIVE_URL}/files", params=params)
-        resp.raise_for_status()
-        return resp.json().get("files", [])
-
-    async def create_folder(
-        self, name: str, *, parent_id: str | None = None
-    ) -> dict[str, Any]:
-        """Create a folder in Google Drive."""
-        metadata: dict[str, Any] = {
-            "name": name,
-            "mimeType": "application/vnd.google-apps.folder",
-        }
-        if parent_id:
-            metadata["parents"] = [parent_id]
-        logger.info("Creating Drive folder '%s'", name)
-        resp = await self._client.post(f"{DRIVE_URL}/files", json=metadata)
-        resp.raise_for_status()
-        return resp.json()
-
-    async def get_file_metadata(
-        self, file_id: str, *, fields: str = "id,name,mimeType,size,modifiedTime"
-    ) -> dict[str, Any]:
-        """Get metadata for a single Drive file."""
-        logger.debug("Fetching metadata for file %s", file_id)
-        resp = await self._client.get(
-            f"{DRIVE_URL}/files/{file_id}", params={"fields": fields}
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    # ── Gmail ──────────────────────────────────────────────────────────
-
-    async def list_emails(
-        self,
-        *,
-        query: str = "",
-        max_results: int = 20,
-        user_id: str = "me",
-    ) -> list[dict[str, Any]]:
-        """List email message IDs matching a query."""
-        params: dict[str, Any] = {"maxResults": max_results}
+    async def list_emails(self, *, query: str = "", max_results: int = 10) -> Dict[str, Any]:
+        """List emails matching a query."""
+        params: Dict[str, Any] = {"maxResults": max_results}
         if query:
             params["q"] = query
-        logger.debug("Listing emails (query='%s')", query)
         resp = await self._client.get(
-            f"{GMAIL_URL}/users/{user_id}/messages", params=params
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+            params=params,
         )
         resp.raise_for_status()
-        return resp.json().get("messages", [])
+        return resp.json()
 
-    async def get_email(
-        self, message_id: str, *, user_id: str = "me", fmt: str = "full"
-    ) -> dict[str, Any]:
-        """Retrieve a single email message."""
-        logger.debug("Fetching email %s", message_id)
+    async def get_email(self, message_id: str) -> Dict[str, Any]:
+        """Get a specific email by ID."""
         resp = await self._client.get(
-            f"{GMAIL_URL}/users/{user_id}/messages/{message_id}",
-            params={"format": fmt},
+            f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}",
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    # ── Calendar ──────────────────────────────────────────────────
+
+    async def list_calendar_events(self, *, calendar_id: str = "primary",
+                                    max_results: int = 10,
+                                    time_min: Optional[str] = None) -> Dict[str, Any]:
+        """List upcoming calendar events."""
+        params: Dict[str, Any] = {"maxResults": max_results, "singleEvents": True, "orderBy": "startTime"}
+        if time_min:
+            params["timeMin"] = time_min
+        resp = await self._client.get(
+            f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events",
+            params=params,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def create_calendar_event(self, summary: str, start: str, end: str,
+                                     *, calendar_id: str = "primary",
+                                     description: str = "",
+                                     attendees: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Create a calendar event."""
+        payload: Dict[str, Any] = {
+            "summary": summary,
+            "start": {"dateTime": start},
+            "end": {"dateTime": end},
+        }
+        if description:
+            payload["description"] = description
+        if attendees:
+            payload["attendees"] = [{"email": e} for e in attendees]
+        resp = await self._client.post(
+            f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events",
+            json=payload,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    # ── Drive ─────────────────────────────────────────────────────
+
+    async def list_files(self, *, query: str = "", page_size: int = 20) -> Dict[str, Any]:
+        """List Google Drive files."""
+        params: Dict[str, Any] = {"pageSize": page_size}
+        if query:
+            params["q"] = query
+        resp = await self._client.get(
+            "https://www.googleapis.com/drive/v3/files",
+            params=params,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def create_doc(self, title: str) -> Dict[str, Any]:
+        """Create a new Google Doc."""
+        resp = await self._client.post(
+            "https://docs.googleapis.com/v1/documents",
+            json={"title": title},
         )
         resp.raise_for_status()
         return resp.json()

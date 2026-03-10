@@ -1,116 +1,69 @@
-"""Zapier webhook and NLA (Natural Language Actions) client.
+"""Zapier client — trigger webhooks and manage Zap executions."""
 
-Usage::
-
-    client = ZapierClient(nla_api_key="sk-ak-...")
-    client.register_webhook("new_lead", "https://hooks.zapier.com/hooks/catch/123/abc/")
-    await client.trigger("new_lead", {"email": "alice@example.com", "source": "website"})
-    actions = await client.list_actions()
-    await client.close()
-"""
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Dict, Optional
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-NLA_BASE_URL = "https://nla.zapier.com/api/v1"
-
 
 class ZapierClient:
-    """Async Zapier webhook trigger and NLA client."""
+    """Async Zapier REST Hooks / NLA client.
 
-    def __init__(self, *, nla_api_key: str | None = None) -> None:
-        self.nla_api_key = nla_api_key
-        self._webhooks: dict[str, str] = {}
-        headers: dict[str, str] = {"Content-Type": "application/json"}
-        if nla_api_key:
-            headers["x-api-key"] = nla_api_key
-        self._client = httpx.AsyncClient(headers=headers, timeout=30.0)
+    Usage::
 
-    async def close(self) -> None:
+        async with ZapierClient(api_key="zk_...") as zap:
+            await zap.trigger_webhook("https://hooks.zapier.com/hooks/catch/...", {"lead": "data"})
+    """
+
+    BASE_URL = "https://nla.zapier.com/api/v1"
+
+    def __init__(self, api_key: str, *, timeout: float = 30.0):
+        self._headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
+        self._timeout = timeout
+        self._client = httpx.AsyncClient(headers=self._headers, timeout=timeout)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
         await self._client.aclose()
 
-    def register_webhook(self, name: str, url: str) -> None:
-        """Register a webhook URL under a friendly name for later triggering."""
-        logger.info("Registered webhook '%s' -> %s", name, url)
-        self._webhooks[name] = url
-
-    async def trigger(
-        self, name: str, data: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
-        """Trigger a registered webhook by name with an optional JSON payload."""
-        url = self._webhooks.get(name)
-        if not url:
-            raise KeyError(
-                f"Webhook '{name}' not registered. "
-                f"Available: {list(self._webhooks.keys())}"
-            )
-        return await self.trigger_url(url, data)
-
-    async def trigger_url(
-        self, url: str, data: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
-        """POST directly to an arbitrary webhook URL."""
-        logger.info("Triggering webhook: %s", url)
-        resp = await self._client.post(url, json=data or {})
+    async def trigger_webhook(self, webhook_url: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Fire a Zapier webhook (catch hook) with arbitrary data."""
+        resp = await self._client.post(webhook_url, json=data)
         resp.raise_for_status()
         try:
             return resp.json()
         except Exception:
-            return {"status": resp.status_code, "text": resp.text}
+            return {"status": "ok", "text": resp.text}
 
-    def _ensure_nla(self) -> None:
-        if not self.nla_api_key:
-            raise ValueError("nla_api_key is required for NLA operations")
-
-    async def list_actions(self) -> list[dict[str, Any]]:
-        """List all exposed NLA actions for the authenticated user."""
-        self._ensure_nla()
-        logger.debug("Listing NLA actions")
-        resp = await self._client.get(
-            f"{NLA_BASE_URL}/exposed/",
-            headers={"x-api-key": self.nla_api_key or ""},
-        )
+    async def list_actions(self) -> Dict[str, Any]:
+        """List available NLA actions for this API key."""
+        resp = await self._client.get(f"{self.BASE_URL}/exposed/")
         resp.raise_for_status()
-        data = resp.json()
-        return data.get("results", [])
+        return resp.json()
 
-    async def execute_action(
-        self,
-        action_id: str,
-        instructions: str,
-        *,
-        params: dict[str, Any] | None = None,
-        preview_only: bool = False,
-    ) -> dict[str, Any]:
-        """Execute (or preview) an NLA action by ID.
-
-        Args:
-            action_id: The exposed action ID from list_actions.
-            instructions: Natural-language instruction for the action.
-            params: Optional structured parameters to pass.
-            preview_only: If True, returns what would happen without executing.
-        """
-        self._ensure_nla()
-        endpoint = "preview" if preview_only else "execute"
-        url = f"{NLA_BASE_URL}/exposed/{action_id}/{endpoint}/"
-        payload: dict[str, Any] = {"instructions": instructions}
+    async def execute_action(self, action_id: str, instructions: str,
+                              *, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute an exposed NLA action by ID with natural-language instructions."""
+        payload: Dict[str, Any] = {"instructions": instructions}
         if params:
             payload["params"] = params
-        logger.info(
-            "%s NLA action %s: %s",
-            "Previewing" if preview_only else "Executing",
-            action_id,
-            instructions[:80],
-        )
         resp = await self._client.post(
-            url,
+            f"{self.BASE_URL}/exposed/{action_id}/execute/",
             json=payload,
-            headers={"x-api-key": self.nla_api_key or ""},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    async def get_execution_log(self, action_id: str, execution_id: str) -> Dict[str, Any]:
+        """Retrieve execution log for a specific action run."""
+        resp = await self._client.get(
+            f"{self.BASE_URL}/execution-log/{action_id}/{execution_id}/",
         )
         resp.raise_for_status()
         return resp.json()
